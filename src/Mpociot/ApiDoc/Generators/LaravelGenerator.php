@@ -72,7 +72,7 @@ class LaravelGenerator extends AbstractGenerator
     public function callRoute($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null)
     {
         $kernel = App::make('Illuminate\Contracts\Http\Kernel');
-        App::instance('middleware.disable', true);
+        //App::instance('middleware.disable', true);
 
         $server = collect([
             'CONTENT_TYPE' => 'application/json',

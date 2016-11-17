@@ -124,7 +124,8 @@ abstract class AbstractGenerator
     {
         list($class, $method) = explode('@', $route);
         $reflection = new ReflectionClass($class);
-        $comment = $reflection->getDocComment();
+        $reflectionMethod = $reflection->getMethod($method);
+        $comment = $reflectionMethod->getDocComment();
         if ($comment) {
             $phpdoc = new DocBlock($comment);
             foreach ($phpdoc->getTags() as $tag) {
