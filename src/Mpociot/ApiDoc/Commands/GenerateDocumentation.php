@@ -81,8 +81,24 @@ class GenerateDocumentation extends Command
         } else {
             $parsedRoutes = $this->processDingoRoutes($generator, $allowedRoutes, $routePrefix, $middleware);
         }
-        $parsedRoutes = collect($parsedRoutes)->groupBy('resource')->sortBy('resource');
-
+        
+        // Allow for multiple 'resource' tags seperated by pipes so a controller with 2 routes can be used
+        $groupedByDuplicates = collect($parsedRoutes)->groupBy('title')->toArray();
+        $regroupedRoutes = [];
+        foreach ($groupedByDuplicates as $duplicates) {
+            $i = 0;
+            foreach ($duplicates as $duplicate_route) {
+                $groups = explode("|", $duplicate_route['resource']);
+                if (isset($groups[$i])) {
+                    $duplicate_route['resource'] = $groups[$i];
+                }
+                $regroupedRoutes[] = $duplicate_route;
+                $i++;
+            }
+        }
+        $parsedRoutes = collect($regroupedRoutes)->groupBy('resource')->sort(function ($a, $b) {
+            return strcmp($a->first()['resource'], $b->first()['resource']);
+        });
         $this->writeMarkdown($parsedRoutes);
     }
 
