@@ -37,7 +37,9 @@ class LaravelGenerator extends AbstractGenerator
 
         if ($withResponse) {
             $response = $this->getRouteResponse($route, $bindings, $headers);
-            if ($response->headers->get('Content-Type') === 'application/json') {
+            if (!$response) {
+                $content = null;
+            } else if ($response->headers->get('Content-Type') === 'application/json') {
                 $content = json_encode(json_decode($response->getContent()), JSON_PRETTY_PRINT);
             } else {
                 $content = $response->getContent();
@@ -71,6 +73,9 @@ class LaravelGenerator extends AbstractGenerator
      */
     public function callRoute($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null)
     {
+        if ($method != 'GET') {
+            return null;
+        }
         $kernel = App::make('Illuminate\Contracts\Http\Kernel');
         //App::instance('middleware.disable', true);
 
