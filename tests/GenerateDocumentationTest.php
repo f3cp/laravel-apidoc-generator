@@ -2,15 +2,16 @@
 
 namespace Mpociot\ApiDoc\Tests;
 
-use Dingo\Api\Provider\LaravelServiceProvider;
-use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Routing\Route;
-use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
-use Mpociot\ApiDoc\Generators\LaravelGenerator;
-use Mpociot\ApiDoc\Tests\Fixtures\DingoTestController;
 use Orchestra\Testbench\TestCase;
+use Illuminate\Contracts\Console\Kernel;
+use Dingo\Api\Provider\LaravelServiceProvider;
+use Mpociot\ApiDoc\Generators\LaravelGenerator;
 use Mpociot\ApiDoc\Tests\Fixtures\TestController;
+use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
 use Illuminate\Support\Facades\Route as RouteFacade;
+use Mpociot\ApiDoc\Tests\Fixtures\DingoTestController;
+use Mpociot\ApiDoc\Tests\Fixtures\TestResourceController;
 
 class GenerateDocumentationTest extends TestCase
 {
@@ -69,6 +70,10 @@ class GenerateDocumentationTest extends TestCase
 
     public function testConsoleCommandDoesNotWorkWithClosureUsingDingo()
     {
+        if (version_compare($this->app->version(), '5.4', '>=')) {
+            $this->markTestSkipped('Dingo does not support Laravel 5.4');
+        }
+
         $api = app('Dingo\Api\Routing\Router');
         $api->version('v1', function ($api) {
             $api->get('/closure', function () {
@@ -95,6 +100,17 @@ class GenerateDocumentationTest extends TestCase
         ]);
         $this->assertContains('Skipping route: [GET,HEAD] api/skip', $output);
         $this->assertContains('Processed route: [GET,HEAD] api/test', $output);
+    }
+
+    public function testCanParseResourceRoutes()
+    {
+        RouteFacade::resource('/api/user', TestResourceController::class);
+        $output = $this->artisan('api:generate', [
+            '--routePrefix' => 'api/*',
+        ]);
+        $generatedMarkdown = file_get_contents(__DIR__.'/../public/docs/source/index.md');
+        $fixtureMarkdown = file_get_contents(__DIR__.'/Fixtures/resource_index.md');
+        $this->assertSame($generatedMarkdown, $fixtureMarkdown);
     }
 
     public function testGeneratedMarkdownFileIsCorrect()
@@ -162,6 +178,18 @@ class GenerateDocumentationTest extends TestCase
     "x-custom-header": [
         "foobar"
     ]', $generatedMarkdown);
+    }
+
+    public function testGeneratesUTF8Responses()
+    {
+        RouteFacade::get('/api/utf8', TestController::class.'@utf8');
+
+        $output = $this->artisan('api:generate', [
+            '--routePrefix' => 'api/*',
+        ]);
+
+        $generatedMarkdown = file_get_contents(__DIR__.'/../public/docs/source/index.md');
+        $this->assertContains('Лорем ипсум долор сит амет', $generatedMarkdown);
     }
 
     /**

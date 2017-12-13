@@ -42,6 +42,19 @@ class DingoGenerator extends AbstractGenerator
     }
 
     /**
+     * Prepares / Disables route middlewares.
+     *
+     * @param  bool $disable
+     *
+     * @return  void
+     */
+    public function prepareMiddleware($disable = true)
+    {
+        // Not needed by Dingo
+        return false;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function callRoute($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null)
@@ -58,8 +71,16 @@ class DingoGenerator extends AbstractGenerator
     /**
      * {@inheritdoc}
      */
-    protected function getUri($route)
+    public function getUri($route)
     {
         return $route->uri();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMethods($route)
+    {
+        return $route->getMethods();
     }
 }

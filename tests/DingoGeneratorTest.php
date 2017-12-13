@@ -2,13 +2,13 @@
 
 namespace Mpociot\ApiDoc\Tests;
 
-use Dingo\Api\Provider\LaravelServiceProvider;
-use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
-use Mpociot\ApiDoc\Generators\DingoGenerator;
-use Mpociot\ApiDoc\Tests\Fixtures\DingoTestController;
-use Mpociot\ApiDoc\Tests\Fixtures\TestController;
-use Mpociot\ApiDoc\Tests\Fixtures\TestRequest;
 use Orchestra\Testbench\TestCase;
+use Mpociot\ApiDoc\Generators\DingoGenerator;
+use Dingo\Api\Provider\LaravelServiceProvider;
+use Mpociot\ApiDoc\Tests\Fixtures\TestRequest;
+use Mpociot\ApiDoc\Tests\Fixtures\TestController;
+use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
+use Mpociot\ApiDoc\Tests\Fixtures\DingoTestController;
 
 class DingoGeneratorTest extends TestCase
 {
@@ -37,6 +37,10 @@ class DingoGeneratorTest extends TestCase
 
     public function testCanParseMethodDescription()
     {
+        if (version_compare($this->app->version(), '5.4', '>=')) {
+            $this->markTestSkipped('Dingo does not support Laravel 5.4');
+        }
+
         $api = app('Dingo\Api\Routing\Router');
         $api->version('v1', function ($api) {
             $api->get('/api/test', TestController::class.'@parseMethodDescription');
@@ -51,6 +55,10 @@ class DingoGeneratorTest extends TestCase
 
     public function testCanParseRouteMethods()
     {
+        if (version_compare($this->app->version(), '5.4', '>=')) {
+            $this->markTestSkipped('Dingo does not support Laravel 5.4');
+        }
+
         $api = app('Dingo\Api\Routing\Router');
         $api->version('v1', function ($api) {
             $api->get('/get', TestController::class.'@dummy');
@@ -77,6 +85,10 @@ class DingoGeneratorTest extends TestCase
 
     public function testCanParseFormRequestRules()
     {
+        if (version_compare($this->app->version(), '5.4', '>=')) {
+            $this->markTestSkipped('Dingo does not support Laravel 5.4');
+        }
+
         $api = app('Dingo\Api\Routing\Router');
         $api->version('v1', function ($api) {
             $api->post('/post', DingoTestController::class.'@parseFormRequestRules');

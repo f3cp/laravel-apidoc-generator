@@ -10,7 +10,7 @@
 > Example request:
 
 ```bash
-curl "{{config('app.url')}}/{{$parsedRoute['uri']}}" \
+curl -X {{$parsedRoute['methods'][0]}} "{{config('app.url')}}/{{$parsedRoute['uri']}}" \
 -H "Accept: application/json"@if(count($parsedRoute['parameters'])) \
 @foreach($parsedRoute['parameters'] as $attribute => $parameter)
     -d "{{$attribute}}"="{{$parameter['value']}}" \
@@ -43,9 +43,9 @@ $.ajax(settings).done(function (response) {
 
 ```json
 @if(is_object($parsedRoute['response']) || is_array($parsedRoute['response']))
-{!! json_encode($parsedRoute['response'], JSON_PRETTY_PRINT) !!}
+{!! json_encode($parsedRoute['response'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
 @else
-{!! json_encode(json_decode($parsedRoute['response']), JSON_PRETTY_PRINT) !!}
+{!! json_encode(json_decode($parsedRoute['response']), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
 @endif
 ```
 @endif
