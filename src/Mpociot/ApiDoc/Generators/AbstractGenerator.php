@@ -156,6 +156,29 @@ abstract class AbstractGenerator
 
         return 'general';
     }
+    
+        /**
+     * @param  string  $route
+     *
+     * @return string
+     */
+    protected function getRouteCustomResponse($route)
+    {
+        list($class, $method) = explode('@', $route);
+        $reflection = new ReflectionClass($class);
+        $reflectionMethod = $reflection->getMethod($method);
+        $comment = $reflectionMethod->getDocComment();
+        if ($comment) {
+            $phpdoc = new DocBlock($comment);
+            foreach ($phpdoc->getTags() as $tag) {
+                if ($tag->getName() === 'response') {
+                    return $tag->getContent();
+                }
+            }
+        }
+
+        return null;
+    }
 
     /**
      * @param  $route

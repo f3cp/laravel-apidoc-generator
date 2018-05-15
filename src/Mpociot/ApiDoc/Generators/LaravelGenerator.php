@@ -8,15 +8,14 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Foundation\Http\FormRequest;
 
-class LaravelGenerator extends AbstractGenerator
-{
+class LaravelGenerator extends AbstractGenerator {
+
     /**
      * @param Route $route
      *
      * @return mixed
      */
-    public function getUri($route)
-    {
+    public function getUri($route) {
         if (version_compare(app()->version(), '5.4', '<')) {
             return $route->getUri();
         }
@@ -29,8 +28,7 @@ class LaravelGenerator extends AbstractGenerator
      *
      * @return mixed
      */
-    public function getMethods($route)
-    {
+    public function getMethods($route) {
         if (version_compare(app()->version(), '5.4', '<')) {
             return $route->getMethods();
         }
@@ -46,35 +44,39 @@ class LaravelGenerator extends AbstractGenerator
      *
      * @return array
      */
-    public function processRoute($route, $bindings = [], $headers = [], $withResponse = true)
-    {
+    public function processRoute($route, $bindings = [], $headers = [], $withResponse = true) {
         $content = '';
 
         $routeAction = $route->getAction();
         $routeGroup = $this->getRouteGroup($routeAction['uses']);
         $routeDescription = $this->getRouteDescription($routeAction['uses']);
+        $custom_response = $this->getRouteCustomResponse($routeAction['uses']);
 
-        if ($withResponse) {
-            $response = $this->getRouteResponse($route, $bindings, $headers);
-            if (!$response) {
-                $content = null;
-            } else if ($response->headers->get('Content-Type') === 'application/json') {
-                $content = json_encode(json_decode($response->getContent()), JSON_PRETTY_PRINT);
-            } else {
-                $content = $response->getContent();
+        if ($custom_response) {
+            $content = $custom_response;
+        } else {
+            if ($withResponse) {
+                $response = $this->getRouteResponse($route, $bindings, $headers);
+                if (!$response) {
+                    $content = null;
+                } else if ($response->headers->get('Content-Type') === 'application/json') {
+                    $content = json_encode(json_decode($response->getContent()), JSON_PRETTY_PRINT);
+                } else {
+                    $content = $response->getContent();
+                }
             }
         }
 
         return $this->getParameters([
-            'id' => md5($this->getUri($route).':'.implode($this->getMethods($route))),
-            'resource' => $routeGroup,
-            'title' => $routeDescription['short'],
-            'description' => $routeDescription['long'],
-            'methods' => $this->getMethods($route),
-            'uri' => $this->getUri($route),
-            'parameters' => [],
-            'response' => $content,
-        ], $routeAction, $bindings);
+                    'id' => md5($this->getUri($route) . ':' . implode($this->getMethods($route))),
+                    'resource' => $routeGroup,
+                    'title' => $routeDescription['short'],
+                    'description' => $routeDescription['long'],
+                    'methods' => $this->getMethods($route),
+                    'uri' => $this->getUri($route),
+                    'parameters' => [],
+                    'response' => $content,
+                        ], $routeAction, $bindings);
     }
 
     /**
@@ -84,8 +86,7 @@ class LaravelGenerator extends AbstractGenerator
      *
      * @return  void
      */
-    public function prepareMiddleware($disable = true)
-    {
+    public function prepareMiddleware($disable = true) {
         App::instance('middleware.disable', true);
     }
 
@@ -102,20 +103,18 @@ class LaravelGenerator extends AbstractGenerator
      *
      * @return \Illuminate\Http\Response
      */
-    public function callRoute($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null)
-    {
+    public function callRoute($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null) {
         if ($method != 'GET') {
             return null;
         }
 
         $server = collect([
-            'CONTENT_TYPE' => 'application/json',
-            'Accept' => 'application/json',
-        ])->merge($server)->toArray();
+                    'CONTENT_TYPE' => 'application/json',
+                    'Accept' => 'application/json',
+                ])->merge($server)->toArray();
 
         $request = Request::create(
-            $uri, $method, $parameters,
-            $cookies, $files, $this->transformHeadersToServerVars($server), $content
+                        $uri, $method, $parameters, $cookies, $files, $this->transformHeadersToServerVars($server), $content
         );
 
         $kernel = App::make('Illuminate\Contracts\Http\Kernel');
@@ -123,7 +122,7 @@ class LaravelGenerator extends AbstractGenerator
 
         $kernel->terminate($request, $response);
 
-        if (file_exists($file = App::bootstrapPath().'/app.php')) {
+        if (file_exists($file = App::bootstrapPath() . '/app.php')) {
             $app = require $file;
             $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
         }
@@ -137,15 +136,14 @@ class LaravelGenerator extends AbstractGenerator
      *
      * @return array
      */
-    protected function getRouteRules($route, $bindings)
-    {
+    protected function getRouteRules($route, $bindings) {
         list($class, $method) = explode('@', $route);
         $reflection = new ReflectionClass($class);
         $reflectionMethod = $reflection->getMethod($method);
 
         foreach ($reflectionMethod->getParameters() as $parameter) {
             $parameterType = $parameter->getClass();
-            if (! is_null($parameterType) && class_exists($parameterType->name)) {
+            if (!is_null($parameterType) && class_exists($parameterType->name)) {
                 $className = $parameterType->name;
 
                 if (is_subclass_of($className, FormRequest::class)) {
@@ -157,7 +155,7 @@ class LaravelGenerator extends AbstractGenerator
 
                     if (method_exists($parameterReflection, 'validator')) {
                         return app()->call([$parameterReflection, 'validator'])
-                            ->getRules();
+                                        ->getRules();
                     } else {
                         return app()->call([$parameterReflection, 'rules']);
                     }
@@ -167,4 +165,5 @@ class LaravelGenerator extends AbstractGenerator
 
         return [];
     }
+
 }
